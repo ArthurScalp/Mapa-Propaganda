@@ -12,19 +12,20 @@
       background:#2c3e50; color:#fff; font-size:18px; font-weight:bold;
     }
     .topbar input[type="text"]{ padding:6px; font-size:15px; width:120px; border-radius:4px; border:1px solid #ccc; }
-    .topbar button { padding:6px 12px; font-size:15px; cursor:pointer; border:none; border-radius:4px; color:#fff; font-weight:bold; }
-    .btn-saude { background:#27ae60; }       /* Verde */
-    .btn-alim { background:#e67e22; }       /* Laranja */
-    .btn-serv { background:#f1c40f; color:#000; } /* Amarelo */
-    .btn-com { background:#2c3e50; }        /* Azul escuro */
-    .btn-saude:hover { background:#1e8449; }
-    .btn-alim:hover { background:#ca6f1e; }
-    .btn-serv:hover { background:#d4ac0d; }
-    .btn-com:hover { background:#1a242f; }
-    #map { position:absolute; top:90px; left:0; right:0; bottom:0; }
-    .popup-logo { max-width:150px; margin-bottom:6px; border-radius:6px; }
-    .popup-btn { display:inline-block; margin:4px 0; padding:5px 10px; background:#3498db; color:#fff; border-radius:6px; text-decoration:none; font-size:14px; }
-    .popup-btn:hover { background:#2980b9; }
+    .topbar button { padding:6px 12px; font-size:15px; cursor:pointer; border:none; border-radius:4px; font-weight:bold; }
+    .btn-saude { background:#27ae60; color:#fff; }       /* Verde */
+    .btn-alim { background:#e67e22; color:#fff; }       /* Laranja */
+    .btn-serv { background:#f1c40f; color:#000; }       /* Amarelo */
+    .btn-com { background:#2c3e50; color:#fff; }        /* Azul escuro */
+    .btn-black { background:#000000; color:#fff; }      /* Buscar e Todas */
+    #map { position:absolute; top:90px; left:25%; right:0; bottom:0; }
+    #sidebar {
+      position:absolute; top:90px; left:0; bottom:0; width:25%; overflow-y:auto;
+      background:#fff; border-right:1px solid #ccc; padding:10px;
+    }
+    .store-item { border-bottom:1px solid #eee; padding:8px 4px; }
+    .store-name { font-weight:bold; display:block; margin-bottom:4px; }
+    .wa-btn { display:inline-block; padding:4px 8px; background:#25d366; color:#fff; text-decoration:none; border-radius:4px; font-size:14px; }
     #msg { margin-left:16px;color:#f1c40f;font-weight:normal; }
   </style>
 </head>
@@ -33,8 +34,8 @@
     📍 Mapa Publicitário
     <label for="q" style="margin-left:16px;">Loja:</label>
     <input id="q" type="text" placeholder="ex: 16" />
-    <button id="btnSearch">Buscar</button>
-    <button id="btnList">Todas</button>
+    <button class="btn-black" id="btnSearch">Buscar</button>
+    <button class="btn-black" id="btnList">Todas</button>
     <button class="btn-saude" id="btnSaude">Saúde</button>
     <button class="btn-alim" id="btnAlim">Alimentação</button>
     <button class="btn-serv" id="btnServ">Serviços</button>
@@ -42,6 +43,7 @@
     <div id="msg"></div>
   </div>
 
+  <div id="sidebar"></div>
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -119,22 +121,16 @@
 
     const map = L.map('map').setView([-3.4595, -40.207], 15);
 
-    // Satélite estilo Google (Esri World Imagery)
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles © Esri & contributors'
     }).addTo(map);
 
     const markers = {};
-
-    // Criar os marcadores
     stores.forEach(s => {
       const m = L.marker([s.lat, s.lng]).bindPopup(`
         <div style="text-align:center;">
-          <img src="logos/${s.id}.jpg" class="popup-logo"><br>
           <b>${s.name}</b><br>
           Nº: ${s.id}<br>
-          <a class="popup-btn" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank">📍 Google Maps</a><br>
-          <a class="popup-btn" href="https://waze.com/ul?ll=${s.lat},${s.lng}&navigate=yes" target="_blank">🚗 Waze</a><br>
           <a class="popup-btn" href="https://wa.me/${s.whatsapp}" target="_blank">💬 WhatsApp</a>
         </div>
       `);
@@ -146,6 +142,28 @@
       const subset = stores.filter(s => +s.id >= start && +s.id <= end);
       subset.forEach(s => markers[s.id].addTo(map));
       map.fitBounds(subset.map(s => [s.lat, s.lng]), {padding:[50,50]});
+      renderSidebar(subset);
+    }
+
+    function renderSidebar(list) {
+      const sb = document.getElementById('sidebar');
+      sb.innerHTML = "";
+      if (!list.length) { sb.innerHTML = "<p>Nenhuma loja encontrada.</p>"; return; }
+      list.forEach(s => {
+        const div = document.createElement("div");
+        div.className = "store-item";
+        div.innerHTML = `
+          <span class="store-name">${s.id} - ${s.name}</span>
+          <a class="wa-btn" href="https://wa.me/${s.whatsapp}" target="_blank">WhatsApp</a>
+        `;
+        sb.appendChild(div);
+      });
+    }
+
+    function showAll() {
+      Object.values(markers).forEach(m => m.addTo(map));
+      map.fitBounds(Object.values(markers).map(m => m.getLatLng()), {padding:[50,50]});
+      renderSidebar(stores);
     }
 
     function showMessage(t) {
@@ -163,20 +181,17 @@
       markers[s.id].addTo(map);
       map.setView([s.lat, s.lng], 18, {animate:true});
       markers[s.id].openPopup();
+      renderSidebar([s]);
     });
 
-    document.getElementById('btnList').addEventListener('click', () => {
-      Object.values(markers).forEach(m => m.addTo(map));
-      map.fitBounds(Object.values(markers).map(m => m.getLatLng()), {padding:[50,50]});
-    });
-
+    document.getElementById('btnList').addEventListener('click', showAll);
     document.getElementById('btnSaude').addEventListener('click', ()=> showCategory(1,11));
     document.getElementById('btnAlim').addEventListener('click', ()=> showCategory(12,22));
     document.getElementById('btnServ').addEventListener('click', ()=> showCategory(23,46));
     document.getElementById('btnCom').addEventListener('click', ()=> showCategory(47,62));
 
-    // mostrar tudo ao carregar
-    Object.values(markers).forEach(m => m.addTo(map));
+    // Mostrar tudo ao carregar
+    showAll();
   </script>
 </body>
 </html>
