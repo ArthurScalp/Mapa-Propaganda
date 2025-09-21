@@ -2,51 +2,61 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Mapa Publicitário de Santana do Acaraú - CE - 2025</title>
+  <title>Mapa Publicitário - Santana do Acaraú</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
-    body, html { margin:0; padding:0; height:100%; font-family: Arial, Helvetica, sans-serif; }
-    #map { position:absolute; top:0; left:0; right:0; bottom:0; }
+    body { margin:0; font-family: Arial, Helvetica, sans-serif; }
     .topbar {
-      position:absolute; top:0; left:0; right:0; display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:10px 10px; z-index:1000;
-      background:rgba(44,62,80,0.9); color:#fff; font-size:16px; font-weight:bold;
+      height:auto; display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:10px 20px;
+      background:#2c3e50; color:#fff; font-size:18px; font-weight:bold;
+      position:relative; z-index:1000;
     }
-    .topbar input[type="text"]{ padding:6px; font-size:15px; width:100px; border-radius:4px; border:1px solid #ccc; }
-    .topbar button { padding:6px 12px; font-size:14px; cursor:pointer; border:none; border-radius:4px; color:#fff; font-weight:bold; }
-    .btn-saude { background:#27ae60; }       /* Verde */
-    .btn-alim { background:#e67e22; }       /* Laranja */
-    .btn-serv { background:#f1c40f; color:#000; } /* Amarelo */
-    .btn-com { background:#4073f5; }        /* Azul ajustado */
+    .topbar input[type="text"]{ padding:6px; font-size:15px; width:120px; border-radius:4px; border:1px solid #ccc; }
+    .topbar button { padding:6px 12px; font-size:15px; cursor:pointer; border:none; border-radius:4px; font-weight:bold; }
+    .btn-saude { background:#27ae60; color:#fff; }       
+    .btn-alim { background:#e67e22; color:#000; }       
+    .btn-serv { background:#f1c40f; color:#000; }       
+    .btn-com { background:#4073f5; color:#fff; }        
     .btn-saude:hover { background:#1e8449; }
     .btn-alim:hover { background:#ca6f1e; }
     .btn-serv:hover { background:#d4ac0d; }
-    .btn-com:hover { background:#1a55d3; }
-    .btn-search { background:#86878a; }      /* Buscar */
-    .btn-list { background:#86878a; }        /* Todas */
-    #bottomBar {
-      position:absolute; bottom:0; left:0; right:0; padding:5px 10px; display:flex; gap:8px; overflow-x:auto; z-index:1000;
-      background: rgba(0,0,0,0.5); height:110px; align-items:center;
+    .btn-com:hover { background:#305fd1; }
+    #btnSearch, #btnList { background:#86878a; color:#fff; }
+    #btnSearch:hover, #btnList:hover { background:#6c6d70; }
+    #map { position:absolute; top:50px; left:0; right:0; bottom:0; z-index:1; }
+    #bottombar {
+      position:absolute; bottom:0; left:0; right:0; height:150px; background:rgba(0,0,0,0.5); 
+      display:flex; overflow-x:auto; padding:10px; gap:10px; align-items:center; z-index:500;
+      pointer-events:auto; scroll-behavior:smooth;
     }
-    .store-logo { width:100px; border-radius:6px; border:2px solid #fff; }
-    .store-btn { display:inline-block; margin-top:4px; padding:4px 6px; background:green; color:#fff; border-radius:4px; text-decoration:none; font-size:12px; }
-    .store-container { text-align:center; }
+    .store-item { 
+      flex:0 0 auto; text-align:center; opacity:0; transition: opacity 0.6s ease-in-out;
+      background:rgba(255,255,255,0.9); border-radius:6px; padding:6px;
+    }
+    .store-item.show { opacity:1; }
+    .store-logo { width:120px; border-radius:6px; margin-bottom:6px; }
+    .store-btn { display:block; margin:4px 0; padding:5px 8px; background:#3498db; color:#fff; border-radius:6px; text-decoration:none; font-size:14px; }
+    .store-btn:hover { background:#2980b9; }
+    .store-btn.whatsapp { background:#27ae60; }
+    .store-btn.whatsapp:hover { background:#1e8449; }
   </style>
 </head>
 <body>
   <div class="topbar">
     📍 Mapa Publicitário
+    <label for="q" style="margin-left:16px;">Loja:</label>
     <input id="q" type="text" placeholder="ex: 16" />
-    <button id="btnSearch" class="btn-search">Buscar</button>
-    <button id="btnList" class="btn-list">Todas</button>
+    <button id="btnSearch">Buscar</button>
+    <button id="btnList">Todas</button>
     <button class="btn-saude" id="btnSaude">Saúde</button>
     <button class="btn-alim" id="btnAlim">Alimentação</button>
     <button class="btn-serv" id="btnServ">Serviços</button>
     <button class="btn-com" id="btnCom">Comércio</button>
   </div>
 
+  <div id="bottombar"></div>
   <div id="map"></div>
-  <div id="bottomBar"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
@@ -115,87 +125,73 @@
       { id:"62", lat:-3.456139, lng:-40.211622, whatsapp:"5588999992252", category:"Comércio" }
     ];
 
-    const categories = {
-      saude: stores.filter(s=>+s.id>=1 && +s.id<=11),
-      alimentacao: stores.filter(s=>+s.id>=12 && +s.id<=22),
-      servicos: stores.filter(s=>+s.id>=23 && +s.id<=46),
-      comercio: stores.filter(s=>+s.id>=47 && +s.id<=62),
-    };
-
-    // Mapa Leaflet
-    const map = L.map('map').setView([-3.4595, -40.207],16);
-    L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-      maxZoom:20, subdomains:['mt0','mt1','mt2','mt3']
+    const map = L.map('map').setView([-3.4595, -40.207], 16);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution:'Tiles &copy; Esri'
     }).addTo(map);
 
-    // Ícones padrão
-    stores.forEach(s=>{
-      L.marker([s.lat,s.lng]).addTo(map);
-    });
+    const markers = {};
+    stores.forEach(s => { markers[s.id] = L.marker([s.lat,s.lng]).addTo(map); });
 
-    const bottombar = document.getElementById('bottomBar');
-    let scrollInterval, searchTimeout;
+    const bottombar = document.getElementById('bottombar');
+    let searchTimeout;
 
-    function showBottomStores(list){
-      clearInterval(scrollInterval);
+    function showBottomStores(filtered){
       bottombar.innerHTML="";
-      let idx=0;
-      function nextStore(){
-        if(idx>=list.length) idx=0;
-        bottombar.innerHTML = `<div class="store-container">
-          <img class="store-logo" src="logos/${list[idx].id}.jpg" /><br>
-          <a href="https://www.google.com/maps/dir/?api=1&destination=${list[idx].lat},${list[idx].lng}" target="_blank" class="store-btn">📍 Navegação</a>
-          ${list[idx].whatsapp?`<a href="https://wa.me/${list[idx].whatsapp}" target="_blank" class="store-btn">💬 WhatsApp</a>`:""}
-        </div>`;
-        idx++;
-      }
-      nextStore();
-      scrollInterval = setInterval(nextStore,10000);
+      filtered.forEach(s=>{
+        const div=document.createElement('div');
+        div.className="store-item show";
+        div.innerHTML=`<img src="logos/${s.id}.jpg" class="store-logo"><br>
+          <a class="store-btn" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank">📍 Navegação</a>
+          ${s.whatsapp?`<a class="store-btn whatsapp" href="https://wa.me/${s.whatsapp}" target="_blank">💬 WhatsApp</a>`:""}`;
+        bottombar.appendChild(div);
+      });
     }
 
-    function showCategory(cat){
-      if(!categories[cat]) return;
-      showBottomStores(categories[cat]);
+    function showCategory(category){
+      const filtered = stores.filter(s=>s.category===category).sort((a,b)=>parseInt(a.id)-parseInt(b.id));
+      showBottomStores(filtered);
     }
 
-    document.getElementById('btnSaude').onclick = ()=>showCategory('saude');
-    document.getElementById('btnAlim').onclick = ()=>showCategory('alimentacao');
-    document.getElementById('btnServ').onclick = ()=>showCategory('servicos');
-    document.getElementById('btnCom').onclick = ()=>showCategory('comercio');
+    document.getElementById('btnSaude').onclick=()=>showCategory('Saúde');
+    document.getElementById('btnAlim').onclick=()=>showCategory('Alimentação');
+    document.getElementById('btnServ').onclick=()=>showCategory('Serviços');
+    document.getElementById('btnCom').onclick=()=>showCategory('Comércio');
 
-    // Buscar
-    document.getElementById('btnSearch').onclick = buscarLoja;
-    document.getElementById('q').addEventListener('keypress', function(e){
-      if(e.key==='Enter') buscarLoja();
-    });
+    document.getElementById('btnList').onclick=()=>showBottomStores(stores);
 
-    function buscarLoja(){
+    document.getElementById('btnSearch').onclick=()=>{
       const q = document.getElementById('q').value.trim();
       const store = stores.find(s=>s.id===q);
       if(!store) return alert("Loja não encontrada");
 
-      map.setView([store.lat,store.lng],18);
       L.popup()
         .setLatLng([store.lat,store.lng])
         .setContent(`<img src="logos/${store.id}.jpg" style="width:150px"><br>
-          <a href="https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}" target="_blank" class="store-btn">📍 Navegação</a>
-          ${store.whatsapp?`<a href="https://wa.me/${store.whatsapp}" target="_blank" class="store-btn">💬 WhatsApp</a>`:""}`)
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}" target="_blank">📍 Navegação</a>
+          ${store.whatsapp?`<br><a href="https://wa.me/${store.whatsapp}" target="_blank" style="color:white;background:green;padding:4px 8px;border-radius:4px;display:inline-block;margin-top:4px;">💬 WhatsApp</a>`:""}`)
         .openOn(map);
 
       showBottomStores([store]);
 
       clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(()=>{
+      searchTimeout=setTimeout(()=>{
         map.closePopup();
         bottombar.innerHTML="";
         map.setView([-3.4595, -40.207],16);
       },10000);
     }
 
-    // Mostrar todas as lojas
-    document.getElementById('btnList').onclick = ()=>{
-      showBottomStores(stores);
-    };
+    // Popup aleatório a cada 10s
+    setInterval(()=>{
+      const s = stores[Math.floor(Math.random()*stores.length)];
+      L.popup()
+        .setLatLng([s.lat,s.lng])
+        .setContent(`<img src="logos/${s.id}.jpg" style="width:150px"><br>
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank">📍 Navegação</a>
+          ${s.whatsapp?`<br><a href="https://wa.me/${s.whatsapp}" target="_blank" style="color:white;background:green;padding:4px 8px;border-radius:4px;display:inline-block;margin-top:4px;">💬 WhatsApp</a>`:""}`)
+        .openOn(map);
+    },10000);
   </script>
 </body>
 </html>
