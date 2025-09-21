@@ -8,23 +8,24 @@
   <style>
     body { margin:0; font-family: Arial, Helvetica, sans-serif; background:#f5f5f5; }
     .topbar {
-      height:70px; display:flex; gap:12px; align-items:center; padding:10px 20px;
+      height:auto; display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:10px 20px;
       background:#2c3e50; color:#fff; font-size:18px; font-weight:bold;
     }
-    .topbar input[type="text"]{ padding:6px; font-size:15px; width:180px; border-radius:4px; border:1px solid #ccc; }
-    .topbar button { padding:6px 12px; font-size:15px; cursor:pointer; border:none; border-radius:4px; background:#3498db; color:#fff; }
-    .topbar button:hover { background:#2980b9; }
-    #map { position:absolute; top:70px; left:220px; right:0; bottom:0; }
-    #sidebar {
-      position:absolute; top:70px; left:0; bottom:0; width:220px;
-      background:#fff; border-right:1px solid #ccc; overflow-y:auto; padding:10px;
-    }
-    .ad-item { text-align:center; margin-bottom:15px; cursor:pointer; }
-    .ad-item img { max-width:150px; max-height:90px; display:block; margin:0 auto 5px; border-radius:6px; }
-    .ad-item b { font-size:14px; color:#333; display:block; margin-bottom:3px; }
+    .topbar input[type="text"]{ padding:6px; font-size:15px; width:120px; border-radius:4px; border:1px solid #ccc; }
+    .topbar button { padding:6px 12px; font-size:15px; cursor:pointer; border:none; border-radius:4px; color:#fff; font-weight:bold; }
+    .btn-saude { background:#27ae60; }       /* Verde */
+    .btn-alim { background:#e67e22; }       /* Laranja */
+    .btn-serv { background:#f1c40f; color:#000; } /* Amarelo */
+    .btn-com { background:#2c3e50; }        /* Azul escuro */
+    .btn-saude:hover { background:#1e8449; }
+    .btn-alim:hover { background:#ca6f1e; }
+    .btn-serv:hover { background:#d4ac0d; }
+    .btn-com:hover { background:#1a242f; }
+    #map { position:absolute; top:90px; left:0; right:0; bottom:0; }
     .popup-logo { max-width:150px; margin-bottom:6px; border-radius:6px; }
     .popup-btn { display:inline-block; margin:4px 0; padding:5px 10px; background:#3498db; color:#fff; border-radius:6px; text-decoration:none; font-size:14px; }
     .popup-btn:hover { background:#2980b9; }
+    #msg { margin-left:16px;color:#f1c40f;font-weight:normal; }
   </style>
 </head>
 <body>
@@ -33,75 +34,87 @@
     <label for="q" style="margin-left:16px;">Loja:</label>
     <input id="q" type="text" placeholder="ex: 16" />
     <button id="btnSearch">Buscar</button>
-    <button id="btnList">Mostrar todas</button>
-    <div id="msg" style="margin-left:16px;color:#f1c40f;font-weight:normal;"></div>
+    <button id="btnList">Todas</button>
+    <button class="btn-saude" id="btnSaude">Saúde</button>
+    <button class="btn-alim" id="btnAlim">Alimentação</button>
+    <button class="btn-serv" id="btnServ">Serviços</button>
+    <button class="btn-com" id="btnCom">Comércio</button>
+    <div id="msg"></div>
   </div>
 
-  <div id="sidebar"></div>
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
+    // === Dados das lojas ===
     const stores = [
-      { id:"17", name:"Padaria Braz", lat:-3.458779, lng:-40.203935, whatsapp:"5588996401920" },
-      { id:"23", name:"Oficina São Cristóvão", lat:-3.458669, lng:-40.204319, whatsapp:"5588996573335" },
-      { id:"44", name:"Vitória Confecções", lat:-3.458267, lng:-40.204694, whatsapp:"5588992732995" },
-      { id:"40", name:"DF Motos", lat:-3.458239, lng:-40.204740, whatsapp:"5588996194374" },
-      { id:"51", name:"Posto Famol", lat:-3.458161, lng:-40.205987, whatsapp:"5588" },
-      { id:"32", name:"Paulo Elétrico", lat:-3.458048, lng:-40.206124, whatsapp:"5588993370108" },
-      { id:"50", name:"Santana Vidros", lat:-3.458335, lng:-40.206499, whatsapp:"5588999224939" },
-      { id:"34", name:"Ítalo Motos", lat:-3.459092, lng:-40.207505, whatsapp:"5588996733692" },
-      { id:"43", name:"ZAF Decorações", lat:-3.459092, lng:-40.207505, whatsapp:"5588996233151" },
-      { id:"21", name:"Café e Cias", lat:-3.460963, lng:-40.209886, whatsapp:"5588993443600" },
-      { id:"58", name:"FR7 Motos", lat:-3.461115, lng:-40.209956, whatsapp:"5588992711780" },
-      { id:"19", name:"Master Gelatto", lat:-3.461232, lng:-40.210082, whatsapp:"5588999518776" },
-      { id:"55", name:"Sandra Modas", lat:-3.461346, lng:-40.209469, whatsapp:"5588997279246" },
-      { id:"04", name:"Lacliso", lat:-3.461348, lng:-40.209577, whatsapp:"5588993335636" },
-      { id:"14", name:"Hipermax", lat:-3.461581, lng:-40.209177, whatsapp:"5588997286037" },
-      { id:"02", name:"Dra Anita", lat:-3.461124, lng:-40.208692, whatsapp:"5588999612096" },
-      { id:"25", name:"SmartCell", lat:-3.460282, lng:-40.210314, whatsapp:"5588996826374" },
-      { id:"59", name:"5R Móveis", lat:-3.460115, lng:-40.210450, whatsapp:"5588" },
-      { id:"27", name:"Digital Gráfica", lat:-3.459955, lng:-40.211127, whatsapp:"5588997135985" },
-      { id:"05", name:"Ótica Popular", lat:-3.459998, lng:-40.211163, whatsapp:"5588993758322" },
-      { id:"03", name:"Ótica do Trabalhador", lat:-3.459921, lng:-40.211520, whatsapp:"5588999966746" },
-      { id:"45", name:"Pousada 05 de Julho", lat:-3.460195, lng:-40.211787, whatsapp:"5588999187492" },
-      { id:"08", name:"Laboclisa", lat:-3.460285, lng:-40.211196, whatsapp:"5588996555900" },
-      { id:"47", name:"AJ Festas", lat:-3.460333, lng:-40.211332, whatsapp:"5588996696445" },
-      { id:"49", name:"Arrazo", lat:-3.460379, lng:-40.211395, whatsapp:"5588994404629" },
-      { id:"57", name:"Neide Sports", lat:-3.459370, lng:-40.211616, whatsapp:"5588" },
       { id:"01", name:"Farmácia Neide Farma", lat:-3.458989, lng:-40.211312, whatsapp:"5588999320315" },
-      { id:"13", name:"Ôh Açaí", lat:-3.458361, lng:-40.211691, whatsapp:"5588" },
-      { id:"30", name:"Souza Barber", lat:-3.457967, lng:-40.212021, whatsapp:"558899954333" },
-      { id:"35", name:"EdmarSom", lat:-3.457401, lng:-40.210252, whatsapp:"5588996134260" },
-      { id:"26", name:"GS Autocar", lat:-3.457966, lng:-40.209832, whatsapp:"5588996761351" },
-      { id:"42", name:"Performace Academia", lat:-3.457832, lng:-40.209751, whatsapp:"5588998088720" },
-      { id:"28", name:"Bala BarberShop", lat:-3.458808, lng:-40.210128, whatsapp:"5588999917735" },
-      { id:"15", name:"Sabor Express", lat:-3.458995, lng:-40.209667, whatsapp:"5588996354940" },
-      { id:"22", name:"Padaria São João", lat:-3.459104, lng:-40.208934, whatsapp:"5588999524771" },
-      { id:"07", name:"Farmácia Livramento", lat:-3.461756, lng:-40.209153, whatsapp:"5588996832954" },
-      { id:"39", name:"Santana Fitness", lat:-3.460250, lng:-40.208088, whatsapp:"5588997387283" },
-      { id:"18", name:"Self Servce", lat:-3.459504, lng:-40.210931, whatsapp:"5588996141428" },
-      { id:"36", name:"Power Motos", lat:-3.458197, lng:-40.208338, whatsapp:"5588997624314" },
-      { id:"38", name:"Pousada Serv Bem", lat:-3.457985, lng:-40.208032, whatsapp:"5588997287079" },
-      { id:"24", name:"Barbearia Ivanildo", lat:-3.459886, lng:-40.212184, whatsapp:"5588997381290" },
-      { id:"16", name:"Esquina das Frutas", lat:-3.459405, lng:-40.206793, whatsapp:"5588996607152" },
-      { id:"60", name:"Amo 10 Variedades", lat:-3.460824, lng:-40.208309, whatsapp:"5588" },
-      { id:"12", name:"Império das Frutas", lat:-3.460743, lng:-40.208147, whatsapp:"5588996086589" },
-      { id:"20", name:"Super Benzinho", lat:-3.459253, lng:-40.206606, whatsapp:"5588994897676" },
-      { id:"11", name:"Farmácia Santa Ana", lat:-3.460895, lng:-40.209753, whatsapp:"5588999015503" },
-      { id:"29", name:"Oficina Reginaldo", lat:-3.463854, lng:-40.203010, whatsapp:"5588997391882" },
-      { id:"41", name:"Ofício das Cordas", lat:-3.460189, lng:-40.199831, whatsapp:"5588" },
-      { id:"37", name:"SplintCar", lat:-3.463134, lng:-40.205110, whatsapp:"5588996035924" },
-      { id:"31", name:"Afrânio Estofados", lat:-3.461130, lng:-40.207456, whatsapp:"5588999048925" },
-      { id:"33", name:"Charles Celulares", lat:-3.460360, lng:-40.210887, whatsapp:"5588" },
-      { id:"53", name:"F. Helder Comércio", lat:-3.461329, lng:-40.210201, whatsapp:"5588997427893" },
-      { id:"61", name:"Chiquinho Fotografias", lat:-3.460828, lng:-40.212191, whatsapp:"5588996024744" },
-      { id:"56", name:"Casa do Peixe", lat:-3.458659, lng:-40.205614, whatsapp:"5588" },
-      { id:"62", name:"Lelyse", lat:-3.456139, lng:-40.211622, whatsapp:"5588999992252" },
-      { id:"09", name:"Prime Saúde", lat:-3.459235, lng:-40.211787, whatsapp:"5588" },
-      { id:"54", name:"Sandra Variedades", lat:-3.462645, lng:-40.207352, whatsapp:"5588999118169" },
-      { id:"52", name:"FrioAr", lat:-3.463254, lng:-40.207343, whatsapp:"5588996649629" },
+      { id:"02", name:"Dra Anita", lat:-3.461124, lng:-40.208692, whatsapp:"5588999612096" },
+      { id:"03", name:"Ótica do Trabalhador", lat:-3.459921, lng:-40.211520, whatsapp:"5588999966746" },
+      { id:"04", name:"Lacliso", lat:-3.461348, lng:-40.209577, whatsapp:"5588993335636" },
+      { id:"05", name:"Ótica Popular", lat:-3.459998, lng:-40.211163, whatsapp:"5588993758322" },
       { id:"06", name:"Rios Farma", lat:-3.460786, lng:-40.208148, whatsapp:"5588997238535" },
+      { id:"07", name:"Farmácia Livramento", lat:-3.461756, lng:-40.209153, whatsapp:"5588996832954" },
+      { id:"08", name:"Laboclisa", lat:-3.460285, lng:-40.211196, whatsapp:"5588996555900" },
+      //{ id:"09", name:"Prime Saúde", lat:-3.459235, lng:-40.211787, whatsapp:"5588" },
+      //{ id:"10", name:"", lat:-3.460000, lng:-40.210000, whatsapp:"" }, // exemplo se tiver vazio
+      { id:"11", name:"Farmácia Santa Ana", lat:-3.460895, lng:-40.209753, whatsapp:"5588999015503" },
+
+      { id:"12", name:"Império das Frutas", lat:-3.460743, lng:-40.208147, whatsapp:"5588996086589" },
+      { id:"13", name:"Ôh Açaí", lat:-3.458361, lng:-40.211691 },
+      { id:"14", name:"Hipermax", lat:-3.461581, lng:-40.209177, whatsapp:"5588997286037" },
+      { id:"15", name:"Sabor Express", lat:-3.458995, lng:-40.209667, whatsapp:"5588996354940" },
+      { id:"16", name:"Esquina das Frutas", lat:-3.459405, lng:-40.206793, whatsapp:"5588996607152" },
+      { id:"17", name:"Padaria Braz", lat:-3.458779, lng:-40.203935, whatsapp:"5588996401920" },
+      { id:"18", name:"Self Servce", lat:-3.459504, lng:-40.210931, whatsapp:"5588996141428" },
+      { id:"19", name:"Master Gelatto", lat:-3.461232, lng:-40.210082, whatsapp:"5588999518776" },
+      { id:"20", name:"Super Benzinho", lat:-3.459253, lng:-40.206606, whatsapp:"5588994897676" },
+      { id:"21", name:"Café e Cias", lat:-3.460963, lng:-40.209886, whatsapp:"5588993443600" },
+      { id:"22", name:"Padaria São João", lat:-3.459104, lng:-40.208934, whatsapp:"5588999524771" },
+
+      // Serviços (23-46)
+      { id:"23", name:"Oficina São Cristóvão", lat:-3.458669, lng:-40.204319, whatsapp:"5588996573335" },
+      { id:"24", name:"Barbearia Ivanildo", lat:-3.459886, lng:-40.212184, whatsapp:"5588997381290" },
+      { id:"25", name:"SmartCell", lat:-3.460282, lng:-40.210314, whatsapp:"5588996826374" },
+      { id:"26", name:"GS Autocar", lat:-3.457966, lng:-40.209832, whatsapp:"5588996761351" },
+      { id:"27", name:"Digital Gráfica", lat:-3.459955, lng:-40.211127, whatsapp:"5588997135985" },
+      { id:"28", name:"Bala BarberShop", lat:-3.458808, lng:-40.210128, whatsapp:"5588999917735" },
+      { id:"29", name:"Oficina Reginaldo", lat:-3.463854, lng:-40.203010, whatsapp:"5588997391882" },
+      { id:"30", name:"Souza Barber", lat:-3.457967, lng:-40.212021, whatsapp:"558899954333" },
+      { id:"31", name:"Afrânio Estofados", lat:-3.461130, lng:-40.207456, whatsapp:"5588999048925" },
+      { id:"32", name:"Paulo Elétrico", lat:-3.458048, lng:-40.206124, whatsapp:"5588993370108" },
+      { id:"33", name:"Charles Celulares", lat:-3.460360, lng:-40.210887 },
+      { id:"34", name:"Ítalo Motos", lat:-3.459092, lng:-40.207505, whatsapp:"5588996733692" },
+      { id:"35", name:"EdmarSom", lat:-3.457401, lng:-40.210252, whatsapp:"5588996134260" },
+      { id:"36", name:"Power Motos", lat:-3.458197, lng:-40.208338, whatsapp:"5588997624314" },
+      { id:"37", name:"SplintCar", lat:-3.463134, lng:-40.205110, whatsapp:"5588996035924" },
+      { id:"38", name:"Pousada Serv Bem", lat:-3.457985, lng:-40.208032, whatsapp:"5588997287079" },
+      { id:"39", name:"Santana Fitness", lat:-3.460250, lng:-40.208088, whatsapp:"5588997387283" },
+      { id:"40", name:"DF Motos", lat:-3.458239, lng:-40.204740, whatsapp:"5588996194374" },
+      { id:"41", name:"Ofício das Cordas", lat:-3.460189, lng:-40.199831, whatsapp:"5588996488990" },
+      { id:"42", name:"Performace Academia", lat:-3.457832, lng:-40.209751, whatsapp:"5588998088720" },
+      //{ id:"43", name:"ZAF Decorações", lat:-3.459092, lng:-40.207505, whatsapp:"5588996233151" },
+      { id:"44", name:"Vitória Confecções", lat:-3.458267, lng:-40.204694, whatsapp:"5588992732995" },
+      { id:"45", name:"Pousada 05 de Julho", lat:-3.460195, lng:-40.211787, whatsapp:"5588999187492" },
+      { id:"46", name:"Global Motos", lat:-3.458823, lng:-40.203554, whatsapp:"5588999320268" },
+
+      // Comércio (47-62)
+      { id:"47", name:"AJ Festas", lat:-3.460333, lng:-40.211332, whatsapp:"5588996696445" },
+      { id:"48", name:"H²O Distribuidora", lat:-3.456487, lng:-40.206766, whatsapp:"5588996593310" },
+      { id:"49", name:"Arrazo", lat:-3.460379, lng:-40.211395, whatsapp:"5588994404629" },
+      { id:"50", name:"Santana Vidros", lat:-3.458335, lng:-40.206499, whatsapp:"5588999224939" },
+      { id:"51", name:"Posto Famol", lat:-3.458161, lng:-40.205987, },
+      { id:"52", name:"FrioAr", lat:-3.463254, lng:-40.207343, whatsapp:"5588996649629" },
+      { id:"53", name:"F. Helder Comércio", lat:-3.461329, lng:-40.210201, whatsapp:"5588997427893" },
+      { id:"54", name:"Sandra Variedades", lat:-3.462645, lng:-40.207352, whatsapp:"5588999118169" },
+      { id:"55", name:"Sandra Modas", lat:-3.461346, lng:-40.209469, whatsapp:"5588997279246" },
+      //{ id:"56", name:"Casa do Peixe", lat:-3.458659, lng:-40.205614, whatsapp:"5588" },
+      { id:"57", name:"Neide Sports", lat:-3.459370, lng:-40.211616 },
+      { id:"58", name:"FR7 Motos", lat:-3.461115, lng:-40.209956, whatsapp:"5588992711780" },
+      { id:"59", name:"5R Móveis", lat:-3.460115, lng:-40.210450 },
+      { id:"60", name:"Amo 10 Variedades", lat:-3.460824, lng:-40.208309 },
+      { id:"61", name:"Chiquinho Fotografias", lat:-3.460828, lng:-40.212191, whatsapp:"5588996024744" },
+      { id:"62", name:"Lelyse", lat:-3.456139, lng:-40.211622, whatsapp:"5588999992252" },
     ];
 
     const map = L.map('map').setView([-3.4595, -40.207], 15);
@@ -112,35 +125,28 @@
     }).addTo(map);
 
     const markers = {};
-    const sidebar = document.getElementById("sidebar");
 
+    // Criar os marcadores
     stores.forEach(s => {
-      const m = L.marker([s.lat, s.lng]).addTo(map)
-        .bindPopup(`
-          <div style="text-align:center;">
-            <img src="logos/${s.id}.jpg" class="popup-logo"><br>
-            <b>${s.name}</b><br>
-            Nº: ${s.id}<br>
-            <a class="popup-btn" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank">📍 Google Maps</a><br>
-            <a class="popup-btn" href="https://waze.com/ul?ll=${s.lat},${s.lng}&navigate=yes" target="_blank">🚗 Waze</a><br>
-            <a class="popup-btn" href="https://wa.me/${s.whatsapp}" target="_blank">💬 WhatsApp</a>
-          </div>
-        `);
+      const m = L.marker([s.lat, s.lng]).bindPopup(`
+        <div style="text-align:center;">
+          <img src="logos/${s.id}.jpg" class="popup-logo"><br>
+          <b>${s.name}</b><br>
+          Nº: ${s.id}<br>
+          <a class="popup-btn" href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank">📍 Google Maps</a><br>
+          <a class="popup-btn" href="https://waze.com/ul?ll=${s.lat},${s.lng}&navigate=yes" target="_blank">🚗 Waze</a><br>
+          <a class="popup-btn" href="https://wa.me/${s.whatsapp}" target="_blank">💬 WhatsApp</a>
+        </div>
+      `);
       markers[s.id] = m;
-
-      const div = document.createElement("div");
-      div.className = "ad-item";
-      div.innerHTML = `
-        <img src="logos/${s.id}.jpg">
-        <b>${s.name}</b>
-        <a class="popup-btn" href="https://wa.me/${s.whatsapp}" target="_blank">💬 WhatsApp</a>
-      `;
-      div.addEventListener("click", ()=> {
-        map.setView([s.lat, s.lng], 18);
-        m.openPopup();
-      });
-      sidebar.appendChild(div);
     });
+
+    function showCategory(start, end) {
+      Object.values(markers).forEach(m => map.removeLayer(m));
+      const subset = stores.filter(s => +s.id >= start && +s.id <= end);
+      subset.forEach(s => markers[s.id].addTo(map));
+      map.fitBounds(subset.map(s => [s.lat, s.lng]), {padding:[50,50]});
+    }
 
     function showMessage(t) {
       const el = document.getElementById('msg');
@@ -153,27 +159,24 @@
       if (!q) { showMessage('Digite um número de loja'); return; }
       const s = stores.find(x => x.id === q);
       if (!s) { showMessage('Loja não encontrada'); return; }
-      const m = markers[s.id];
+      Object.values(markers).forEach(m => map.removeLayer(m));
+      markers[s.id].addTo(map);
       map.setView([s.lat, s.lng], 18, {animate:true});
-      m.openPopup();
-    });
-
-    document.getElementById('q').addEventListener('keydown', (e)=>{
-      if (e.key === 'Enter') document.getElementById('btnSearch').click();
+      markers[s.id].openPopup();
     });
 
     document.getElementById('btnList').addEventListener('click', () => {
-      map.fitBounds(Object.values(markers).map(m => m.getLatLng()), {padding: [50,50]});
+      Object.values(markers).forEach(m => m.addTo(map));
+      map.fitBounds(Object.values(markers).map(m => m.getLatLng()), {padding:[50,50]});
     });
 
-    // 🔄 Rotação automática
-    let i = 0;
-    setInterval(() => {
-      const loja = stores[i];
-      markers[loja.id].openPopup();
-      map.setView([loja.lat, loja.lng], 17, {animate:true});
-      i = (i + 1) % stores.length;
-    }, 10000);
+    document.getElementById('btnSaude').addEventListener('click', ()=> showCategory(1,11));
+    document.getElementById('btnAlim').addEventListener('click', ()=> showCategory(12,22));
+    document.getElementById('btnServ').addEventListener('click', ()=> showCategory(23,46));
+    document.getElementById('btnCom').addEventListener('click', ()=> showCategory(47,62));
+
+    // mostrar tudo ao carregar
+    Object.values(markers).forEach(m => m.addTo(map));
   </script>
 </body>
 </html>
