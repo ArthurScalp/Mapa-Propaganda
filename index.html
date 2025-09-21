@@ -14,7 +14,7 @@
     .topbar input[type="text"]{ padding:6px; font-size:15px; width:120px; border-radius:4px; border:1px solid #ccc; }
     .topbar button { padding:6px 12px; font-size:15px; cursor:pointer; border:none; border-radius:4px; font-weight:bold; }
     .btn-saude { background:#27ae60; color:#fff; }       
-    .btn-alim { background:#e67e22; color:#fff; }       
+    .btn-alim { background:#e67e22; color:#000; }       
     .btn-serv { background:#f1c40f; color:#000; }       
     .btn-com { background:#4073f5; color:#fff; }        
     .btn-saude:hover { background:#1e8449; }
@@ -51,8 +51,8 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // === Dados das lojas ===
     const stores = [
+      // --- lojas conforme categorias ---
       { id:"01", lat:-3.458989, lng:-40.211312, whatsapp:"5588999320315", category:"Saúde" },
       { id:"02", lat:-3.461124, lng:-40.208692, whatsapp:"5588999612096", category:"Saúde" },
       { id:"03", lat:-3.459921, lng:-40.211520, whatsapp:"5588999966746", category:"Saúde" },
@@ -116,8 +116,11 @@
       { id:"62", lat:-3.456139, lng:-40.211622, whatsapp:"5588999992252", category:"Comércio" }
     ];
 
-    const map = L.map('map').setView([-3.4595, -40.207], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'&copy; OSM contributors' }).addTo(map);
+    const map = L.map('map').setView([-3.4595, -40.207], 16);
+    // Camada Satélite ESRI
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution:'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, etc'
+    }).addTo(map);
 
     const markers = {};
     stores.forEach(s => {
@@ -147,35 +150,44 @@
     document.getElementById('btnCom').onclick = ()=>showSidebar("Comércio");
     document.getElementById('btnList').onclick = ()=>showSidebar();
 
+    let searchTimeout;
     document.getElementById('btnSearch').onclick = ()=>{
       const q = document.getElementById('q').value.trim();
       const store = stores.find(s=>s.id===q);
-      if(!store) { alert("Loja não encontrada!"); return; }
-      sidebar.innerHTML = "";
-      const div = document.createElement('div');
+      if(!store){ alert("Loja não encontrada!"); return; }
+      sidebar.innerHTML="";
+      const div=document.createElement('div');
       div.className="store-item";
-      div.innerHTML = `
-        <img src="logos/${store.id}.jpg" class="store-logo"><br>
+      div.innerHTML=`<img src="logos/${store.id}.jpg" class="store-logo"><br>
         <a class="store-btn" href="https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}" target="_blank">📍 Navegação</a>
-        ${store.whatsapp ? `<a class="store-btn" href="https://wa.me/${store.whatsapp}" target="_blank">💬 WhatsApp</a>` : ""}
-      `;
+        ${store.whatsapp?`<a class="store-btn" href="https://wa.me/${store.whatsapp}" target="_blank">💬 WhatsApp</a>`:""}`;
       sidebar.appendChild(div);
+
       map.setView([store.lat,store.lng],17);
-      L.popup()
+      const popup = L.popup()
         .setLatLng([store.lat,store.lng])
-        .setContent(`<img src="logos/${store.id}.jpg" style="width:150px"><br><a href="https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}" target="_blank">📍 Navegação</a>${store.whatsapp?`<br><a href="https://wa.me/${store.whatsapp}" target="_blank">💬 WhatsApp</a>`:""}`)
+        .setContent(`<img src="logos/${store.id}.jpg" style="width:150px"><br>
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}" target="_blank">📍 Navegação</a>
+          ${store.whatsapp?`<br><a href="https://wa.me/${store.whatsapp}" target="_blank">💬 WhatsApp</a>`:""}`)
         .openOn(map);
+
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(()=>{
+        map.closePopup();
+        map.setView([-3.4595, -40.207], 16); // volta visão geral
+      },10000);
     }
 
-    // Mostrar popup único aleatório a cada 10s
+    // Popup aleatório a cada 10s
     setInterval(()=>{
       const s = stores[Math.floor(Math.random()*stores.length)];
       L.popup()
         .setLatLng([s.lat,s.lng])
-        .setContent(`<img src="logos/${s.id}.jpg" style="width:150px"><br><a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank">📍 Navegação</a>${s.whatsapp?`<br><a href="https://wa.me/${s.whatsapp}" target="_blank">💬 WhatsApp</a>`:""}`)
+        .setContent(`<img src="logos/${s.id}.jpg" style="width:150px"><br>
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank">📍 Navegação</a>
+          ${s.whatsapp?`<br><a href="https://wa.me/${s.whatsapp}" target="_blank">💬 WhatsApp</a>`:""}`)
         .openOn(map);
     },10000);
-
   </script>
 </body>
 </html>
