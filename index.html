@@ -61,6 +61,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const stores = [
+      // --- Saúde ---
       { id:"01", lat:-3.458989, lng:-40.211312, whatsapp:"5588999320315", category:"Saúde" },
       { id:"02", lat:-3.461124, lng:-40.208692, whatsapp:"5588999612096", category:"Saúde" },
       { id:"03", lat:-3.459921, lng:-40.211520, whatsapp:"5588999966746", category:"Saúde" },
@@ -70,13 +71,58 @@
       { id:"07", lat:-3.461756, lng:-40.209153, whatsapp:"5588996832954", category:"Saúde" },
       { id:"08", lat:-3.460285, lng:-40.211196, whatsapp:"5588996555900", category:"Saúde" },
       { id:"11", lat:-3.460895, lng:-40.209753, whatsapp:"5588999015503", category:"Saúde" },
+      // --- Alimentação ---
       { id:"12", lat:-3.460743, lng:-40.208147, whatsapp:"5588996086589", category:"Alimentação" },
       { id:"13", lat:-3.458361, lng:-40.211691, category:"Alimentação" },
       { id:"14", lat:-3.461581, lng:-40.209177, whatsapp:"5588997286037", category:"Alimentação" },
       { id:"15", lat:-3.458995, lng:-40.209667, whatsapp:"5588996354940", category:"Alimentação" },
       { id:"16", lat:-3.459405, lng:-40.206793, whatsapp:"5588996607152", category:"Alimentação" },
-      { id:"17", lat:-3.458779, lng:-40.203935, whatsapp:"5588996401920", category:"Alimentação" }
-      // Continue adicionando as outras lojas aqui...
+      { id:"17", lat:-3.458779, lng:-40.203935, whatsapp:"5588996401920", category:"Alimentação" },
+      { id:"18", lat:-3.459504, lng:-40.210931, whatsapp:"5588996141428", category:"Alimentação" },
+      { id:"19", lat:-3.461232, lng:-40.210082, whatsapp:"5588999518776", category:"Alimentação" },
+      { id:"20", lat:-3.459253, lng:-40.206606, whatsapp:"5588994897676", category:"Alimentação" },
+      { id:"21", lat:-3.460963, lng:-40.209886, whatsapp:"5588993443600", category:"Alimentação" },
+      { id:"22", lat:-3.459104, lng:-40.208934, whatsapp:"5588999524771", category:"Alimentação" },
+      // --- Serviços ---
+      { id:"23", lat:-3.458669, lng:-40.204319, whatsapp:"5588996573335", category:"Serviços" },
+      { id:"24", lat:-3.459886, lng:-40.212184, whatsapp:"5588997381290", category:"Serviços" },
+      { id:"25", lat:-3.460282, lng:-40.210314, whatsapp:"5588996826374", category:"Serviços" },
+      { id:"26", lat:-3.457966, lng:-40.209832, whatsapp:"5588996761351", category:"Serviços" },
+      { id:"27", lat:-3.459955, lng:-40.211127, whatsapp:"5588997135985", category:"Serviços" },
+      { id:"28", lat:-3.458808, lng:-40.210128, whatsapp:"5588999917735", category:"Serviços" },
+      { id:"29", lat:-3.463854, lng:-40.203010, whatsapp:"5588997391882", category:"Serviços" },
+      { id:"30", lat:-3.457967, lng:-40.212021, whatsapp:"558899954333", category:"Serviços" },
+      { id:"31", lat:-3.461130, lng:-40.207456, whatsapp:"5588999048925", category:"Serviços" },
+      { id:"32", lat:-3.458048, lng:-40.206124, whatsapp:"5588993370108", category:"Serviços" },
+      { id:"33", lat:-3.460360, lng:-40.210887, category:"Serviços" },
+      { id:"34", lat:-3.459092, lng:-40.207505, whatsapp:"5588996733692", category:"Serviços" },
+      { id:"35", lat:-3.457401, lng:-40.210252, whatsapp:"5588996134260", category:"Serviços" },
+      { id:"36", lat:-3.458197, lng:-40.208338, whatsapp:"5588997624314", category:"Serviços" },
+      { id:"37", lat:-3.463134, lng:-40.205110, whatsapp:"5588996035924", category:"Serviços" },
+      { id:"38", lat:-3.457985, lng:-40.208032, whatsapp:"5588997287079", category:"Serviços" },
+      { id:"39", lat:-3.460250, lng:-40.208088, whatsapp:"5588997387283", category:"Serviços" },
+      { id:"40", lat:-3.458239, lng:-40.204740, whatsapp:"5588996194374", category:"Serviços" },
+      { id:"41", lat:-3.460189, lng:-40.199831, whatsapp:"5588996488990", category:"Serviços" },
+      { id:"42", lat:-3.457832, lng:-40.209751, whatsapp:"5588998088720", category:"Serviços" },
+      { id:"44", lat:-3.458267, lng:-40.204694, whatsapp:"5588992732995", category:"Serviços" },
+      { id:"45", lat:-3.460195, lng:-40.211787, whatsapp:"5588999187492", category:"Serviços" },
+      { id:"46", lat:-3.458823, lng:-40.203554, whatsapp:"5588999320268", category:"Serviços" },
+      // --- Comércio ---
+      { id:"47", lat:-3.460333, lng:-40.211332, whatsapp:"5588996696445", category:"Comércio" },
+      { id:"48", lat:-3.456487, lng:-40.206766, whatsapp:"5588996593310", category:"Comércio" },
+      { id:"49", lat:-3.460379, lng:-40.211395, whatsapp:"5588994404629", category:"Comércio" },
+      { id:"50", lat:-3.458335, lng:-40.206499, whatsapp:"5588999224939", category:"Comércio" },
+      { id:"51", lat:-3.458161, lng:-40.205987, category:"Comércio" },
+      { id:"52", lat:-3.463254, lng:-40.207343, whatsapp:"5588996649629", category:"Comércio" },
+      { id:"53", lat:-3.461329, lng:-40.210201, whatsapp:"5588997427893", category:"Comércio" },
+      { id:"54", lat:-3.462645, lng:-40.207352, whatsapp:"5588999118169", category:"Comércio" },
+      { id:"55", lat:-3.461346, lng:-40.209469, whatsapp:"5588997279246", category:"Comércio" },
+      { id:"57", lat:-3.459370, lng:-40.211616, category:"Comércio" },
+      { id:"58", lat:-3.461115, lng:-40.209956, whatsapp:"5588992711780", category:"Comércio" },
+      { id:"59", lat:-3.460115, lng:-40.210450, category:"Comércio" },
+      { id:"60", lat:-3.460824, lng:-40.208309, category:"Comércio" },
+      { id:"61", lat:-3.460828, lng:-40.212191, whatsapp:"5588996024744", category:"Comércio" },
+      { id:"62", lat:-3.456139, lng:-40.211622, whatsapp:"5588999992252", category:"Comércio" }
     ];
 
     const map = L.map('map').setView([-3.4595, -40.207], 16);
