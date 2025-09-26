@@ -161,10 +161,26 @@
 
     document.getElementById('btnList').onclick=()=>showBottomStores(stores);
 
-    document.getElementById('btnSearch').onclick=()=>{
-      const q = document.getElementById('q').value.trim();
-      const store = stores.find(s=>s.id===q);
-      if(!store) return alert("Loja não encontrada");
+  const query = document.getElementById("search").value.trim().toLowerCase();
+  if (!query) return;
+
+  // procurar tanto pelo número quanto pelo nome
+  const store = stores.find(s => 
+    s.id === query.padStart(2, "0") || 
+    s.nome.toLowerCase().includes(query)
+  );
+
+  if (store) {
+    showStore(store);
+    setTimeout(() => {
+      hideStore();
+      document.getElementById("search").value = "";
+      map.setView([-3.462, -40.211], 16);
+    }, 10000);
+  } else {
+    alert("Loja não encontrada!");
+  }
+}
 
       L.popup()
         .setLatLng([store.lat,store.lng])
