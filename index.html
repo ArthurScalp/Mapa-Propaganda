@@ -160,7 +160,8 @@
     document.getElementById('btnCom').onclick=()=>showCategory('Comércio');
 
     document.getElementById('btnList').onclick=()=>showBottomStores(stores);
-
+    
+function searchStore() {
   const query = document.getElementById("search").value.trim().toLowerCase();
   if (!query) return;
 
