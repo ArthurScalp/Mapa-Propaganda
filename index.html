@@ -46,7 +46,7 @@
   <div class="topbar">
     📍 Mapa Publicitário
     <label for="q" style="margin-left:16px;">Loja:</label>
-    <input id="q" type="text" placeholder="ex: 16" />
+    <input id="q" type="text" placeholder="ex:nome/nº" />
     <button id="btnSearch">Buscar</button>
     <button id="btnList">Todas</button>
     <button class="btn-saude" id="btnSaude">Saúde</button>
@@ -126,20 +126,43 @@
       { id:"62", name:"Lelyse", lat:-3.456139, lng:-40.211622, whatsapp:"5588999992252", category:"Comércio" }
     ];
 
-    const map = L.map('map').setView([-3.4595, -40.207], 16);
+   const map = L.map('map').setView([-3.4595, -40.207], 16);
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution:'Tiles &copy; Esri'
     }).addTo(map);
 
     const markers = {};
     stores.forEach(s => {
-      const m = L.marker([s.lat,s.lng]).addTo(map).bindPopup(`<strong>${s.name}</strong>`);
+      // Ícone com logo da loja
+      const icon = L.icon({
+        iconUrl: `logos/${s.id}.jpg`,
+        iconSize: [50, 50],
+        iconAnchor: [25, 50],
+        popupAnchor: [0, -50],
+        className: 'store-marker'
+      });
+
+      // Cria marcador com ícone
+      const m = L.marker([s.lat, s.lng], { icon }).addTo(map);
+
+      // Popup com logo e infos
+      const popupHtml = `
+        <div style="text-align:center">
+          <img src="logos/${s.id}.jpg" style="width:120px;border-radius:6px;margin-bottom:6px;" onerror="this.style.display='none'"><br>
+          <strong>${s.name}</strong><br>
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank">📍 Navegação</a>
+          ${s.whatsapp ? `<br><a href="https://wa.me/${s.whatsapp}" target="_blank" style="color:white;background:green;padding:4px 8px;border-radius:4px;display:inline-block;margin-top:4px;">💬 WhatsApp</a>` : ""}
+        </div>`;
+      
+      m.bindPopup(popupHtml);
+
+      m.on('click', () => showStore(s));
       markers[s.id] = m;
     });
 
     const bottombar = document.getElementById('bottombar');
-    let searchTimeout;
     let currentPopup = null;
+    let searchTimeout;
 
     function showBottomStores(filtered){
       bottombar.innerHTML="";
@@ -155,47 +178,13 @@
       });
     }
 
-    function showCategory(category){
-      const filtered = stores.filter(s=>s.category===category).sort((a,b)=>parseInt(a.id)-parseInt(b.id));
-      showBottomStores(filtered);
-    }
-
-    document.getElementById('btnSaude').onclick=()=>showCategory('Saúde');
-    document.getElementById('btnAlim').onclick=()=>showCategory('Alimentação');
-    document.getElementById('btnServ').onclick=()=>showCategory('Serviços');
-    document.getElementById('btnCom').onclick=()=>showCategory('Comércio');
-
-    document.getElementById('btnList').onclick=()=>showBottomStores(stores);
-
-    // Funções de busca/mostrar loja
     function showStore(store){
-      // fecha popup atual se houver
       if (currentPopup) map.closePopup(currentPopup);
-      const html = `<div style="text-align:center">
-        <img src="logos/${store.id}.jpg" style="width:150px" onerror="this.style.display='none'"><br>
-        <strong>${store.name}</strong><br>
-        <a href="https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}" target="_blank">📍 Navegação</a>
-        ${store.whatsapp?`<br><a href="https://wa.me/${store.whatsapp}" target="_blank" style="color:white;background:green;padding:4px 8px;border-radius:4px;display:inline-block;margin-top:4px;">💬 WhatsApp</a>`:""}
-      </div>`;
-
-      currentPopup = L.popup({maxWidth:240})
-        .setLatLng([store.lat, store.lng])
-        .setContent(html)
-        .openOn(map);
-
-      // destacar marker (opcional: abrir tooltip / bounce, etc.)
-      if (markers[store.id]) {
-        map.setView([store.lat, store.lng], 17, {animate:true});
-        markers[store.id].openPopup && markers[store.id].openPopup();
-      }
-
+      markers[store.id].openPopup();
+      map.setView([store.lat, store.lng], 17, {animate:true});
       showBottomStores([store]);
-
-      // limpa automaticamente após 10s
       clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(()=> {
-        hideStore();
-      }, 10000);
+      searchTimeout = setTimeout(()=> hideStore(), 10000);
     }
 
     function hideStore(){
@@ -209,16 +198,11 @@
       const raw = document.getElementById("q").value.trim();
       const query = raw.toLowerCase();
       if (!query) return;
-
-      // procurar tanto pelo número (ex: 16) quanto pelo nome
       const found = stores.find(s =>
-        s.id === query.padStart(2, "0") ||
-        s.name.toLowerCase().includes(query)
+        s.id === query.padStart(2, "0") || s.name.toLowerCase().includes(query)
       );
-
       if (found) {
         showStore(found);
-        // limpa input
         document.getElementById("q").value = "";
       } else {
         alert("Loja não encontrada!");
@@ -228,20 +212,6 @@
     document.getElementById('btnSearch').addEventListener('click', searchStore);
     document.getElementById('q').addEventListener('keydown', (e)=>{ if(e.key==='Enter') searchStore(); });
 
-    // Popup aleatório a cada 10s
-    setInterval(()=>{
-      const s = stores[Math.floor(Math.random()*stores.length)];
-      L.popup({maxWidth:240})
-        .setLatLng([s.lat,s.lng])
-        .setContent(`<div style="text-align:center">
-          <img src="logos/${s.id}.jpg" style="width:150px" onerror="this.style.display='none'"><br>
-          <strong>${s.name}</strong><br>
-          <a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank">📍 Navegação</a>
-          ${s.whatsapp?`<br><a href="https://wa.me/${s.whatsapp}" target="_blank" style="color:white;background:green;padding:4px 8px;border-radius:4px;display:inline-block;margin-top:4px;">💬 WhatsApp</a>`:""}
-        </div>`)
-        .openOn(map);
-    },10000);
   </script>
 </body>
 </html>
-
